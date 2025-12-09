@@ -1,0 +1,33 @@
+#!/bin/bash
+
+if [[ $EUID -eq 0 ]]; then
+	echo "Please do NOT run this script as root. Use a normal user."
+	exit 1
+fi
+
+#0. Exit immediately if a command exits with a non-zero status
+set -e
+
+#1. Install gcloud if not installed
+if ! command -v gcloud --version >/dev/null 2>&1; then
+	./install-gcloud
+fi
+
+#2. Check if gcloud is already authenticated
+ACCOUNT=$(gcloud config get-value account 2>/dev/null)
+
+if [ -z "$ACCOUNT" ] || [ "$ACCOUNT" = "(unset)" ]; then
+    echo "[!] No active gcloud account found. Authenticating..."
+    gcloud auth login --quiet
+fi
+
+#3. Setup tinyproxy in Cloud-Shell
+OUTPUT=$(gcloud cloud-shell ssh --command "tinyproxy -v" 2>&1)
+
+if [[ "$OUTPUT" == *"command not found"* ]]; then
+	./install-tinyproxy
+fi
+
+#4. Start tinyproxy
+gcloud cloud-shell ssh --command "sudo /etc/tinyproxy/autorun"
+gcloud cloud-shell ssh --ssh-flag="-L 8888:127.0.0.1:8888"

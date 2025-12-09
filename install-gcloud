@@ -1,0 +1,47 @@
+#!/bin/bash
+
+if [[ $EUID -eq 0 ]]; then
+	echo "Please do NOT run this script as root. Use a normal user."
+	exit 1
+fi
+
+#0. Exit immediately if a command exits with a non-zero status
+set -e
+
+#1. Update your system
+sudo apt update && sudo apt upgrade -y
+
+#2. Install required dependencies
+sudo apt install -y apt-transport-https ca-certificates gnupg curl
+
+#3. Add the Google Cloud SDK APT repository
+# Add Google’s GPG key
+curl -fsSL https://packages.cloud.google.com/apt/doc/apt-key.gpg | sudo gpg --dearmor -o /usr/share/keyrings/cloud.google.gpg
+# Add the repo
+echo "deb [signed-by=/usr/share/keyrings/cloud.google.gpg] https://packages.cloud.google.com/apt cloud-sdk main" \
+	| sudo tee /etc/apt/sources.list.d/google-cloud-sdk.list
+
+#4. Update and install Google Cloud SDK
+sudo apt update
+sudo apt upgrade -y
+sudo apt install -y google-cloud-sdk
+
+#5. (Optional) Install additional components
+sudo apt install -y google-cloud-cli google-cloud-cli-app-engine-python google-cloud-cli-app-engine-python-extras
+
+#6. Verify installation
+gcloud --version
+
+# Check if terminal supports colors
+if [[ -t 1 ]] && [[ -z "$NO_COLOR" ]]; then
+	BRIGHT_GREEN="\033[1;32m"
+	NC="\033[0m"
+else
+	GREEN=""
+	NC=""
+fi
+
+# Print message
+echo -e "${BRIGHT_GREEN}"
+echo -en "[?] gcloud was installed successfully!"
+echo -e "${NC}"

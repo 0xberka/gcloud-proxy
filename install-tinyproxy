@@ -1,0 +1,45 @@
+#!/bin/bash
+
+if [[ $EUID -eq 0 ]]; then
+	echo "Please do NOT run this script as root. Use a normal user."
+	exit 1
+fi
+
+#0. Exit immediately if a command exits with a non-zero status
+set -e
+
+#1. Check if gcloud is already authenticated
+ACCOUNT=$(gcloud config get-value account 2>/dev/null)
+
+if [ -z "$ACCOUNT" ] || [ "$ACCOUNT" = "(unset)" ]; then
+    echo "[!] No active gcloud account found. Authenticating..."
+    gcloud auth login --quiet
+fi
+
+#2. Setting up tinyproxy
+echo "[*] Setting up tinyproxy in Cloud-Shell..."
+
+echo "[-] Install tinyproxy"
+gcloud cloud-shell ssh --command "sudo apt update && sudo apt upgrade -y"
+gcloud cloud-shell ssh --command "sudo apt install -y tinyproxy"
+
+echo "[-] Uploading localhost:tinyproxy.tgz to cloudshell:/tmp"
+tar czvf tinyproxy.tgz tinyproxy/
+gcloud cloud-shell scp localhost:tinyproxy.tgz cloudshell:/tmp
+
+echo "[-] Extracting tinyproxy.tgz into /etc/tinyproxy"
+gcloud cloud-shell ssh --command "cd /etc && sudo tar xvf /tmp/tinyproxy.tgz"
+
+# Check if terminal supports colors
+if [[ -t 1 ]] && [[ -z "$NO_COLOR" ]]; then
+        BRIGHT_GREEN="\033[1;32m"
+        NC="\033[0m"
+else
+        GREEN=""
+        NC=""
+fi
+
+# Print message
+echo -e "${BRIGHT_GREEN}"
+echo -en "[?] Tinyproxy setup completed!"
+echo -e "${NC}"
