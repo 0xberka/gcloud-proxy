@@ -29,5 +29,5 @@ if [[ "$OUTPUT" == *"command not found"* ]]; then
 fi
 
 #4. Start tinyproxy
-gcloud cloud-shell ssh --command "sudo /etc/tinyproxy/autorun"
+gcloud cloud-shell ssh --command "sudo /etc/tinyproxy/start.sh"
 gcloud cloud-shell ssh --ssh-flag="-L 8888:127.0.0.1:8888"

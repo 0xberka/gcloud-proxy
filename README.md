@@ -13,7 +13,7 @@ cd gcloud-proxy
 
 Install and start the proxy:
 ```shell
-./autorun
+./start.sh
 ```
 
 Notes:
